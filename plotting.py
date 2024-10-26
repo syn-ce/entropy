@@ -15,7 +15,7 @@ def plot_evts_by_hour_minute(evts: list[PressedKeyEvt]) -> None:
     plt.show()
 
 
-def plot_key_frequencies(key_frequencies: dict[str, int]):
+def plot_key_frequencies(key_frequencies: dict[str, int], title='Key Frequencies'):
     key_freq_items = [[key, count] for key, count in key_frequencies.items()]
     # key_freq_items.sort(key=lambda x: ord(x[0]) if len(x) == 0 else x[0])
     key_freq_items.sort(key=lambda x: x[1], reverse=True)
@@ -27,5 +27,5 @@ def plot_key_frequencies(key_frequencies: dict[str, int]):
     plt.bar(y_pos, y_values, align='center', alpha=0.5)
     plt.xticks(y_pos, x_labels, rotation=90)
     plt.ylabel('count')
-    plt.title('Key Frequencies')
+    plt.title(title)
     plt.show()

@@ -19,6 +19,19 @@ input_event_format = 'QQHHI'
 event_size = struct.calcsize(input_event_format)
 
 
+class PressedKeyEvt:
+    def __init__(self, value: str, timestamp: float):
+        self.value = value
+        self.timestamp = timestamp
+
+
+class KeyModifier:
+    def __init__(self, name: str, timestamp: float, active: bool):
+        self.name = name
+        self.timestamp = timestamp
+        self.active = active
+
+
 def is_file_modified_after(path: os.DirEntry[str], start_time: float):
     return isfile(path) and os.stat(path).st_mtime >= start_time
 
@@ -43,6 +56,7 @@ def read_evts(path: os.DirEntry[str]) -> list[InputEvent]:
 
 def read_evts_between(path: os.DirEntry[str], start_time: float, end_time: float = sys.float_info.max) -> list[
     InputEvent]:
+    print(end_time - start_time)
     return [evt for evt in read_evts(path) if start_time <= evt.timestamp() < end_time]
 
 
@@ -61,25 +75,14 @@ def get_events_between(path: str, start_time: float, end_time: float = sys.float
     return evts
 
 
-def filter_key_down_evts(evts: list[InputEvent]) -> list[evdev.InputEvent]:
+def filter_key_down_evts(evts: list[InputEvent]) -> list[PressedKeyEvt]:
     key_down_evts = []
     for evt in evts:
         categorized = evdev.categorize(evt)
         if isinstance(categorized, evdev.KeyEvent) and categorized.keystate == evdev.KeyEvent.key_down:
-            key_down_evts.append(evt)
+            key_down_evts.append(PressedKeyEvt(
+                keycode_conversion.get(evt.code, evdev.ecodes.keys[evt.code]), evt.timestamp()))
     return key_down_evts
-
-
-class PressedKeyEvt:
-    def __init__(self, value: str, timestamp: float):
-        self.value = value
-        self.timestamp = timestamp
-
-
-class KeyModifier:
-    def __init__(self, timestamp: float, active: bool):
-        self.timestamp = timestamp
-        self.active = active
 
 
 def deactivate_modifiers_if_expired(modifiers: list[KeyModifier], max_allowed_age: float) -> None:
@@ -91,7 +94,9 @@ def deactivate_modifiers_if_expired(modifiers: list[KeyModifier], max_allowed_ag
 
     now = time.time()
     for modifier in modifiers:
-        if modifier.timestamp - now > max_allowed_age:
+        if modifier.timestamp - now > max_allowed_age and modifier.active:
+            logging.warning('Deactivated modifier %s because it was pressed longer than %f seconds', modifier.name,
+                            max_allowed_age)
             modifier.active = False
 
 
@@ -115,8 +120,8 @@ def filter_key_down_evts_apply_modifiers(evts: list[InputEvent]) -> list[Pressed
     :param evts:
     :return:
     """
-    shift = KeyModifier(0, False)
-    altgr = KeyModifier(0, False)
+    shift = KeyModifier('shift', 0, False)
+    altgr = KeyModifier('altgr', 0, False)
     key_down_evts = []
     for evt in evts:
         categorized = evdev.categorize(evt)
@@ -177,7 +182,7 @@ def get_day_evts(path: str, day_timestamp: float) -> list[InputEvent]:
     day_date = datetime(date.year, date.month, date.day)
     day_start = day_date.timestamp()
     next_day_start = (day_date + timedelta(days=1)).timestamp()
-    return get_events_between(path, day_start, next_day_start)
+    return get_events_between(path, day_start, next_day_start, sort=True)
 
 
 def get_today_evts(path: str) -> list[InputEvent]:
