@@ -6,8 +6,7 @@ import struct
 import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from os.path import isfile
 import time
@@ -45,17 +44,19 @@ def read_evts(path: os.DirEntry[str]) -> list[InputEvent]:
         return evts
 
 
-def read_evts_after(path: os.DirEntry[str], start_time: float) -> list[InputEvent]:
-    return [evt for evt in read_evts(path) if evt.timestamp() >= start_time]
+def read_evts_between(path: os.DirEntry[str], start_time: float, end_time: float = sys.float_info.max) -> list[
+    InputEvent]:
+    return [evt for evt in read_evts(path) if start_time <= evt.timestamp() < end_time]
 
 
-def get_events_after(path: str, start_time: float, sort=False) -> list[InputEvent]:
+def get_events_between(path: str, start_time: float, end_time: float = sys.float_info.max, sort=False) -> list[
+    InputEvent]:
     # Get files which have been modified after (including) start_time
     files = [file for file in os.scandir(path) if is_file_modified_after(file, start_time)]
 
     evts = []
     for file in files:
-        for evt in read_evts_after(file, start_time):
+        for evt in read_evts_between(file, start_time, end_time):
             evts.append(evt)
 
     if sort:
@@ -108,19 +109,24 @@ def evts_to_frequencies(evts: list[InputEvent], multivalue_code_mappings: dict[s
     return frequencies
 
 
-def get_todays_evts(path: str):
-    cur_date = datetime.today()
-    today_time = datetime(cur_date.year, cur_date.month, cur_date.day).timestamp()
+def get_day_evts(path: str, day_timestamp: float) -> list[InputEvent]:
+    date = datetime.fromtimestamp(day_timestamp)
+    day_date = datetime(date.year, date.month, date.day)
+    day_start = day_date.timestamp()
+    next_day_start = (day_date + timedelta(days=1)).timestamp()
+    return get_events_between(path, day_start, next_day_start)
 
-    return get_events_after(path, today_time)
+
+def get_today_evts(path: str) -> list[InputEvent]:
+    return get_day_evts(path, time.time())
 
 
 load_dotenv()
 INPUT_EVENTS_PATH = os.getenv('INPUT_EVENTS_PATH')
 
-todays_evts = get_todays_evts(INPUT_EVENTS_PATH)
+todays_evts = get_today_evts(INPUT_EVENTS_PATH)
 # all_evts = get_events_after(INPUT_EVENTS_PATH, 0)
-evts = filter_key_down_evts(todays_evts)
+evts = filter_key_down_evts_apply_modifiers(todays_evts)
 multival_code_maps = {'KEY_MUTE': ['KEY_MIN_INTERESTING', 'KEY_MUTE']}
 key_frequencies = evts_to_frequencies(evts, multival_code_maps)
 
