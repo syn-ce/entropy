@@ -43,7 +43,20 @@ plot_key_frequencies(key_frequencies, title='Oct 25th Key Frequencies')
 
 print(key_frequencies.get('backspace') / sum(key_frequencies.values()))
 
-keys_to_exclude = ['backspace', 'leftshift', 'rightshift', 'leftctrl', 'rightctrl', 'leftalt', 'rightalt']
-print(sum([count for key, count in key_frequencies.items() if key not in keys_to_exclude]))
+
+def save_nr_as_img(num: int, path: str):
+    font = ImageFont.truetype('arial.ttf', 15)
+    l, t, r, b = font.getbbox(str(num))
+    w, h = r - l, b - t
+    img = Image.new('RGBA', (w, h), (0, 0, 0, 0))  # Transparent background
+    d = ImageDraw.Draw(img)
+    d.fontmode = '1'
+    d.font = font
+    d.text((-l, -t), str(num), fill='black')  # Align to top left by applying inverse of offset
+
+    img.save(path, 'png')
+
+
+save_nr_as_img(total_nr_keypresses, 'total.png')
 print(sorted([(phrase, count) for phrase, count in most_common_phrases(5, evts, topk=20).items()], key=lambda x: x[1],
              reverse=True))
