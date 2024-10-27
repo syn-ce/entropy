@@ -56,8 +56,26 @@ contribute any characters.
 
 ```python
 keys_to_exclude = ['backspace', 'leftshift', 'rightshift', 'leftctrl', 'rightctrl']
-print(sum([count for key, count in key_frequencies.items() if key not in keys_to_exclude])) # 48585
+print(sum([count for key, count in key_frequencies.items() if key not in keys_to_exclude]))  # 48585
 ```
 
 With these not considered, we're closer to around 50000 characters on that day.
 
+If we only look at the letters (excluding the German Umlaute ä, ö and ü as well as ß) we get the following distribution:
+
+![Barchart displaying the relative frequency of letters (i.e., their corresponding keys) on October 25th, 2024. Sorted by frequency descending.](imgs/oct_25th_letter_rel_frequencies.png)
+
+Comparing it to the [relative letter frequency in the english language](https://en.wikipedia.org/wiki/Letter_frequency)
+
+![Barchart displaying the relative frequency of letters (i.e., their corresponding keys) on October 25th, 2024. Sorted by frequency descending. Also contains bars for the relative frequencies of letters in the english language.](/imgs/oct_25th_letter_rel_frequencies_with_en.png)
+
+we see that there are some diversions, giving away that I like to use Vim keybindings (look at w, b, k, j).
+
+Looking again at the first graph, it includes the raw keystrokes, i.e., it doesn't apply the modifiers (Shift, AltGr).
+If you've been wondering why I seem to be liking the 8 and 9 quite a bit, it's because on the German QWERTZ layout these
+are the keys which house the square brackets (when combined with Shift). After applying the Shifts and AltGrs we get the
+following:
+
+![Barchart displaying the relative frequency of letters (i.e., their corresponding keys) on October 25th, 2024, after having applied modifier keys (Shift, AltGr). Sorted by frequency descending.](imgs/oct_25th_key_frequencies_applied_modifiers.png)
+
+[](https://www.m-amthor.com:8080)
