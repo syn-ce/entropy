@@ -13,9 +13,8 @@ INPUT_EVENTS_PATH = os.getenv('INPUT_EVENTS_PATH')
 todays_evts = get_today_evts(INPUT_EVENTS_PATH)
 oct_25th_evts = get_day_evts(INPUT_EVENTS_PATH, datetime.datetime(2024, 10, 25).timestamp())
 # all_evts = get_events_between(INPUT_EVENTS_PATH, 0)
-evts = filter_key_down_evts(oct_25th_evts)
-multival_code_maps = {'KEY_MUTE': ['KEY_MIN_INTERESTING', 'KEY_MUTE']}
-key_frequencies = evts_to_frequencies(evts, multival_code_maps)
+evts = filter_key_down_evts_apply_modifiers(oct_25th_evts)
+key_frequencies = evts_to_frequencies(evts)
 
 
 def calc_entropy(distribution: list[float]):

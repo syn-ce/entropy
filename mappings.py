@@ -1,5 +1,7 @@
 import logging
 
+multivalue_code_maps = {'KEY_MUTE': ['KEY_MIN_INTERESTING', 'KEY_MUTE']}
+
 keycode_conversion = {
     1: 'esc',
     2: '1',

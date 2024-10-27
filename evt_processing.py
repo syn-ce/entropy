@@ -12,7 +12,7 @@ from os.path import isfile
 import evdev
 from evdev import InputEvent
 
-from mappings import keycode_conversion, altgr_conversion, shift_conversion
+from mappings import keycode_conversion, altgr_conversion, shift_conversion, multivalue_code_maps
 
 input_event_format = 'QQHHI'
 # Size of input_event structure (24 bytes)
@@ -26,8 +26,11 @@ class PressedKeyEvt:
 
 
 class KeyModifier:
-    def __init__(self, name: str, timestamp: float, active: bool):
+    def __init__(self, name: str, key_codes: list[int], conversion_table: dict[str, str], timestamp: float,
+                 active: bool):
         self.name = name
+        self.key_codes = key_codes
+        self.conversion_table = conversion_table
         self.timestamp = timestamp
         self.active = active
 
@@ -85,9 +88,25 @@ def filter_key_down_evts(evts: list[InputEvent]) -> list[PressedKeyEvt]:
     return key_down_evts
 
 
+def apply_multivalue_code_mapping(code_name: list[str]) -> str | None:
+    code_names = code_name
+    # Find matching list and its specified code (if there are multiple matches, this depends on items())
+    for code, l in multivalue_code_maps.items():
+        if code_names == l:
+            code_name = code
+            break
+    if isinstance(code_name, list):  # Haven't found matching (or valid) entry in list
+        logging.warning(f'No match for multiple-valued event key {code_name}')
+        return None
+    else:
+        logging.info(f'Mapped multiple-valued event key {code_names} to {code_name}')
+        return code_name
+
+
 def deactivate_modifiers_if_expired(modifiers: list[KeyModifier], max_allowed_age: float) -> None:
     """
     Deactivate modifiers in list if they are too old (we have probably missed a keyup event if we are registering a 'Shift'-Keypress for 10 seconds straight
+    :param max_allowed_age: Maximum allowed time allowed for a modifier, in seconds
     :param modifiers: Modifiers to (potentially) deactivate
     :return: None
     """
@@ -100,17 +119,23 @@ def deactivate_modifiers_if_expired(modifiers: list[KeyModifier], max_allowed_ag
             modifier.active = False
 
 
-def update_modifiers(evt: InputEvent, altgr: KeyModifier, shift: KeyModifier, state: bool) -> [int, int]:
+def update_modifiers(evt: InputEvent, modifiers: list[KeyModifier], state: bool) -> [int, int]:
     categorized = evdev.categorize(evt)
-    # Update modifiers
-    if categorized.keycode == 'KEY_RIGHTALT':
-        altgr.active = state
-        altgr.timestamp = evt.timestamp()
-    elif categorized.keycode in ['KEY_LEFTSHIFT', 'KEY_RIGHTSHIFT']:
-        shift.active = state
-        shift.timestamp = evt.timestamp()
 
-    deactivate_modifiers_if_expired([altgr, shift], 10)  # Deactivate after 10 seconds
+    for modifier in modifiers:
+        if categorized.event.code in modifier.key_codes:
+            modifier.active = state
+            modifier.timestamp = evt.timestamp()
+
+    deactivate_modifiers_if_expired(modifiers, 10)  # Deactivate after 10 seconds
+
+
+def apply_modifiers(key_value: str, timestamp: float, modifiers: list[KeyModifier]) -> PressedKeyEvt:
+    for modifier in modifiers:
+        if modifier.active:
+            key_value = modifier.conversion_table.get(key_value, key_value)
+            break  # Only apply one modifier
+    return PressedKeyEvt(key_value, timestamp)
 
 
 def filter_key_down_evts_apply_modifiers(evts: list[InputEvent]) -> list[PressedKeyEvt]:
@@ -120,23 +145,27 @@ def filter_key_down_evts_apply_modifiers(evts: list[InputEvent]) -> list[Pressed
     :param evts:
     :return:
     """
-    shift = KeyModifier('shift', 0, False)
-    altgr = KeyModifier('altgr', 0, False)
+
+    # Altgr takes precedence over shift (as per our convention)
+    modifiers = [KeyModifier('altgr', [100], altgr_conversion, 0, False),  # 100->'KEY_RIGHTALT'
+                 KeyModifier('shift', [42, 54], shift_conversion, 0,
+                             False)]  # 42->'KEY_LEFTSHIFT', 54->'KEY_RIGHTSHIFT'
+    modifier_codes = {key_code for modifier in modifiers for key_code in modifier.key_codes}
     key_down_evts = []
     for evt in evts:
         categorized = evdev.categorize(evt)
         if isinstance(categorized, evdev.KeyEvent):  # Key
             if categorized.keystate == evdev.KeyEvent.key_down:  # Keydown
-                update_modifiers(evt, altgr, shift, True)
-                key_value = keycode_conversion.get(evt.code, evdev.ecodes.keys[evt.code])
-                # Altgr takes precedence over shift (as per our convention)
-                if altgr.active:
-                    key_value = altgr_conversion.get(key_value, key_value)
-                elif shift.active:
-                    key_value = shift_conversion.get(key_value, key_value)
-                key_down_evts.append(PressedKeyEvt(key_value, evt.timestamp()))
+                update_modifiers(evt, modifiers, True)
+                if evt.code not in modifier_codes:  # Ignore modifier-keys (only apply them to other keys)
+                    key_value = keycode_conversion.get(evt.code, evdev.ecodes.keys[evt.code])
+                    if isinstance(key_value, list):
+                        key_value = apply_multivalue_code_mapping(key_value)
+                    if key_value is not None:
+                        key_down_evt = apply_modifiers(key_value, evt.timestamp(), modifiers)
+                        key_down_evts.append(key_down_evt)
             elif categorized.keystate == evdev.KeyEvent.key_up:  # Keyup
-                update_modifiers(evt, altgr, shift, False)
+                update_modifiers(evt, modifiers, False)
 
     return key_down_evts
 
@@ -151,7 +180,7 @@ logging.basicConfig(
 )
 
 
-def evts_to_frequencies(evts: list[PressedKeyEvt], multivalue_code_mappings: dict[str, list[str]]) -> dict[str, int]:
+def evts_to_frequencies(evts: list[PressedKeyEvt]) -> dict[str, int]:
     """
     :param evts:
     :param multivalue_code_mappings: Maps code name to list of values it maps (would be better the other way around,
@@ -162,18 +191,9 @@ def evts_to_frequencies(evts: list[PressedKeyEvt], multivalue_code_mappings: dic
     for evt in evts:
         code_name = evt.value
         if isinstance(code_name, list):
-            code_names = code_name
-            # Find matching list and its specified code (if there are multiple matches, this depends on items())
-            for code, l in multivalue_code_mappings.items():
-                if code_names == l:
-                    code_name = code
-                    break
-            if isinstance(code_name, list):  # Haven't found matching (or valid) entry in list
-                logging.warning(f'No match for multiple-valued event key {code_name}')
-                continue
-            else:
-                logging.info(f'Mapped multiple-valued event key {code_names} to {code_name}')
-        frequencies[code_name] = frequencies.get(code_name, 0) + 1
+            code_name = apply_multivalue_code_mapping(code_name)
+        if code_name is not None:
+            frequencies[code_name] = frequencies.get(code_name, 0) + 1
     return frequencies
 
 
