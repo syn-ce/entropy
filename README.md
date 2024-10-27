@@ -7,7 +7,7 @@ However, I have to wonder: What am I actually typing all the time?
 Let's first have a brief look at what possible input events we are facing. To get a baseline, we can consider all input
 events which
 are  [mapped by the Linux kernel](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h).
-For our purposes we'll use the evdev python library, which among other things exposes these integer constants.
+For our purposes we'll use the [evdev](https://github.com/gvalkov/python-evdev) python library, which among other things exposes these integer constants.
 
 However, we are quick to start suspecting that
 
