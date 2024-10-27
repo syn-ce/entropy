@@ -78,16 +78,6 @@ def get_events_between(path: str, start_time: float, end_time: float = sys.float
     return evts
 
 
-def filter_key_down_evts(evts: list[InputEvent]) -> list[PressedKeyEvt]:
-    key_down_evts = []
-    for evt in evts:
-        categorized = evdev.categorize(evt)
-        if isinstance(categorized, evdev.KeyEvent) and categorized.keystate == evdev.KeyEvent.key_down:
-            key_down_evts.append(PressedKeyEvt(
-                keycode_conversion.get(evt.code, evdev.ecodes.keys[evt.code]), evt.timestamp()))
-    return key_down_evts
-
-
 def apply_multivalue_code_mapping(code_name: list[str]) -> str | None:
     code_names = code_name
     # Find matching list and its specified code (if there are multiple matches, this depends on items())
@@ -101,6 +91,19 @@ def apply_multivalue_code_mapping(code_name: list[str]) -> str | None:
     else:
         logging.info(f'Mapped multiple-valued event key {code_names} to {code_name}')
         return code_name
+
+
+def filter_key_down_evts(evts: list[InputEvent]) -> list[PressedKeyEvt]:
+    key_down_evts = []
+    for evt in evts:
+        categorized = evdev.categorize(evt)
+        if isinstance(categorized, evdev.KeyEvent) and categorized.keystate == evdev.KeyEvent.key_down:
+            key_value = keycode_conversion.get(evt.code, evdev.ecodes.keys[evt.code])
+            if isinstance(key_value, list):
+                key_value = apply_multivalue_code_mapping(key_value)
+            if key_value is not None:
+                key_down_evts.append(PressedKeyEvt(key_value, evt.timestamp()))
+    return key_down_evts
 
 
 def deactivate_modifiers_if_expired(modifiers: list[KeyModifier], max_allowed_age: float) -> None:
