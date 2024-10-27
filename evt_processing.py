@@ -207,3 +207,20 @@ def get_day_evts(path: str, day_timestamp: float) -> list[InputEvent]:
 
 def get_today_evts(path: str) -> list[InputEvent]:
     return get_day_evts(path, time.time())
+
+
+def most_common_phrases(phrase_length: int, evts: list[PressedKeyEvt], topk: int = -1) -> dict[str, int]:
+    counts: dict[str, int] = dict()
+    cur_phrase: list[str] = []
+
+    for i in range(len(evts) - phrase_length):
+        cur_phrase.append(evts[i].value)
+        if i >= phrase_length:
+            cur_phrase.remove(cur_phrase[0])  # O(phrase_length)
+            phrase = ' '.join(cur_phrase)
+            counts[phrase] = counts.get(phrase, 0) + 1
+
+    if topk > 0:
+        counts = {phrase: count for phrase, count in
+                  sorted([(phr, c) for phr, c in counts.items()], key=lambda x: x[1], reverse=True)[:topk]}
+    return counts

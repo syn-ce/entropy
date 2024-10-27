@@ -4,8 +4,9 @@ import sys
 import os
 from dotenv import load_dotenv
 from evt_processing import get_today_evts, get_events_between, filter_key_down_evts_apply_modifiers, \
-    evts_to_frequencies, filter_key_down_evts, get_day_evts
+    evts_to_frequencies, filter_key_down_evts, get_day_evts, most_common_phrases
 from plotting import plot_evts_by_hour_minute, plot_key_frequencies
+from PIL import Image, ImageDraw, ImageFont
 
 load_dotenv()
 INPUT_EVENTS_PATH = os.getenv('INPUT_EVENTS_PATH')
@@ -44,3 +45,5 @@ print(key_frequencies.get('backspace') / sum(key_frequencies.values()))
 
 keys_to_exclude = ['backspace', 'leftshift', 'rightshift', 'leftctrl', 'rightctrl', 'leftalt', 'rightalt']
 print(sum([count for key, count in key_frequencies.items() if key not in keys_to_exclude]))
+print(sorted([(phrase, count) for phrase, count in most_common_phrases(5, evts, topk=20).items()], key=lambda x: x[1],
+             reverse=True))
