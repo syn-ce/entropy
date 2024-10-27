@@ -41,7 +41,7 @@ print(total_nr_keypresses)
 plot_evts_by_hour_minute(evts)
 plot_key_frequencies(key_frequencies, title='Oct 25th Key Frequencies')
 plot_key_frequencies({key: count for key, count in key_frequencies.items()},
-                     relative=False, title='Oct 25th Letters Frequencies With Applied Modifiers')
+                     relative=False, title='Oct 25th Key Frequencies With Applied Modifiers')
 
 print(key_frequencies.get('backspace') / sum(key_frequencies.values()))
 
