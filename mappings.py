@@ -1,7 +1,8 @@
 import logging
 
 multivalue_code_maps = {'KEY_MUTE': ['KEY_MIN_INTERESTING', 'KEY_MUTE']}
-
+# Note: These mappings have been slightly modified to fit the German QWERTZ keyboard layout.
+# Not all of them (esp. the ones only present on a full size keyboard) have been checked.
 keycode_conversion = {
     1: 'esc',
     2: '1',
@@ -14,8 +15,8 @@ keycode_conversion = {
     9: '8',
     10: '9',
     11: '0',
-    12: '-',
-    13: '=',
+    12: 'ß',
+    13: '`',
     14: 'backspace',
     15: 'tab',
     16: 'q',
@@ -23,13 +24,13 @@ keycode_conversion = {
     18: 'e',
     19: 'r',
     20: 't',
-    21: 'y',
+    21: 'z',
     22: 'u',
     23: 'i',
     24: 'o',
     25: 'p',
-    26: 'leftbrace',
-    27: 'rightbrace',
+    26: 'ü',
+    27: '+',
     28: 'enter',
     29: 'leftctrl',
     30: 'a',
@@ -41,12 +42,12 @@ keycode_conversion = {
     36: 'j',
     37: 'k',
     38: 'l',
-    39: 'semicolon',
-    40: 'apostrophe',
+    39: 'ö',
+    40: 'ä',
     41: '^',
     42: 'leftshift',
-    43: 'backslash',
-    44: 'z',
+    43: '#',
+    44: 'y',
     45: 'x',
     46: 'c',
     47: 'v',
@@ -55,7 +56,7 @@ keycode_conversion = {
     50: 'm',
     51: ',',
     52: '.',
-    53: '/',
+    53: '-',
     54: 'rightshift',
     56: 'leftalt',
     57: 'space',
@@ -70,7 +71,7 @@ keycode_conversion = {
     66: 'f8',
     67: 'f9',
     68: 'f10',
-    86: '102nd',
+    86: '<',
     87: 'f11',
     88: 'f12',
     97: 'rightctrl',
@@ -144,7 +145,7 @@ altgr_conversion = {
     '8': '[',
     '9': ']',
     '0': '}',
-    '<': '>',
+    '<': '|',
 }
 
 
