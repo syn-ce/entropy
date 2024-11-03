@@ -10,7 +10,7 @@
 
 ## Entropy
 
-I spend a lot of time in front of a computer, doing very important stuff [reference] (like writing questionable code - link to image displaying some sort of programming-crime I have commited, perhaps in this very project? update: it won't be hard to find one). A substantial share of that time is devoted to thinking about what to type, and a little less is then spent actually typing it.
+I spend a lot of time in front of a computer, doing *very important stuff* (like writing [questionable code](https://github.com/syn-ce/entropy/blob/361c83ef0a1fb975383a9da7c12b44df401aae20/evt_processing.py#L46)). A substantial share of that time is devoted to thinking about what to type, and a little less is then spent actually typing it.
 However, I have to wonder: What am I actually typing all the time?
 
 Let's start with a brief detour to the entire realm of possible input events we are facing. To get a baseline, we can consider all input events which are [mapped by the Linux kernel](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h).
