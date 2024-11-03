@@ -1,0 +1,27 @@
+services:
+  nginx:
+    image: entropy-nginx
+
+    expose:
+      - 80
+
+    # Traefik-related stuff
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.entropy.rule=(Host(`${DOMAIN_NAME}`) || Host(`www.${DOMAIN_NAME}`)) && PathPrefix(`/entropy`)'
+      - 'traefik.http.middlewares.entropy-strip-entropy-prefix.stripprefix.prefixes=/entropy'
+      - 'traefik.http.routers.entropy.middlewares=entropy-strip-entropy-prefix'
+      - 'traefik.http.routers.entropy.entrypoints=websecure'
+      - 'traefik.http.routers.entropy.tls.certresolver=myresolver'
+      - 'traefik.http.services.entropy.loadbalancer.server.port=80'
+    
+    volumes:
+      - ~/entropy/nginx/html:/usr/share/nginx/html
+
+    networks:
+      - traefik-public
+
+networks:
+  traefik-public:
+    name: traefik-public
+    external: true
