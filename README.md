@@ -1,8 +1,12 @@
 <p align="center">
-<img src="http://www.m-amthor.com/entropy" width="100px">
+<img src="http://www.m-amthor.com/entropy" width="150px">
 </p>
-keys pressed!
-(This number updates regularly)
+<p align="center">  
+  keys pressed! 
+</p>
+<p align="center">
+  (This number updates regularly)
+</p>
 
 ## Entropy
 
