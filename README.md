@@ -1,5 +1,5 @@
 <p align="center">
-<img src="http://www.m-amthor.com/entropy" width="150px">
+<img src="http://www.m-amthor.com/entropy/total/" width="150px">
 </p>
 <p align="center">  
   keys pressed! 
